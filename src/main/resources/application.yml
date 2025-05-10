@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: rss-producer
+  kafka:
+    bootstrap-servers: localhost:39092,localhost:39093,localhost:39094
+    producer:
+      # Enable Idempotence for Exactly-Once
+      enable-idempotence: true
+
+      # Acknowledgment Level (all replicas must acknowledge)
+      acks: all
+
+      # Retries to handle transient errors
+      retries: 2147483647  # Max integer value (infinite retries)
+
+      # Max inflight requests (1 for EOS)
+      max-in-flight-requests-per-connection: 5
+
+      # Transactional ID for exactly-once
+      transactional-id: rss-producer-transaction-1
+
+      # Key and Value Serializers
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+    template:
+      default-topic: nyt.rss.articles
+
+    consumer:
+      # Isolation level to only read committed messages
+      isolation-level: read_committed
+      group-id: rss-consumer-group
+      enable-auto-commit: false
+
+# Polling interval set to 5 minutes (300000 ms)
+rss:
+  url: https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml
+  polling:
+    interval: 300000
+
+server:
+  port: 8081
