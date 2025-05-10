@@ -6,6 +6,7 @@ import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
+import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -53,9 +54,23 @@ public class RssFeedService {
         resultMap.put("title", Optional.ofNullable(entry.getTitle()).orElse("No Title"));
         resultMap.put("link", link);
         resultMap.put("publishedDate", formattedDate);
+        extractMediaFromForeignMarkup(resultMap, entry);
         resultMap.put("description", Optional.ofNullable(entry.getDescription())
                 .map(SyndContent::getValue).orElse("No Description"));
 
         return resultMap;
+    }
+
+    public void extractMediaFromForeignMarkup(Map<String, String> resultMap, SyndEntry entry) {
+        List<Element> foreignMarkup = entry.getForeignMarkup();
+
+        for (Element element : foreignMarkup) {
+            String tagName = element.getName();
+            // Example: Extracting media content
+            if ("content".equals(tagName) || "thumbnail".equals(tagName) || "image".equals(tagName)) {
+                String mediaUrl = element.getAttributeValue("url");
+                resultMap.put("mediaUrl", mediaUrl);
+            }
+        }
     }
 }

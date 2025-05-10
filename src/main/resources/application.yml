@@ -2,7 +2,7 @@ spring:
   application:
     name: rss-producer
   kafka:
-    bootstrap-servers: localhost:39092,localhost:39093,localhost:39094
+    bootstrap-servers: ${KAFKA_BROKER:localhost:39092,localhost:39093,localhost:39094}
     producer:
       # Enable Idempotence for Exactly-Once
       enable-idempotence: true
@@ -39,4 +39,4 @@ rss:
     interval: 300000
 
 server:
-  port: 8081
+  port: 6080

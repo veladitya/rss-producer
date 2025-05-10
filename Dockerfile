@@ -1,32 +1,21 @@
-# Use an official OpenJDK image as the base image
-FROM openjdk:17-jdk-slim
+# Use a multi-stage build to keep the final image size small
 
-# Set working directory
+# Stage 1: Build the application
+FROM maven:3.9.2-eclipse-temurin-17 AS builder
 WORKDIR /app
+COPY pom.xml ./
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy the application JAR file
-COPY target/rss-producer-0.0.1-SNAPSHOT.jar rss-producer.jar
+# Stage 2: Run the application
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+COPY --from=builder /app/target/*.jar rss-producer.jar
 
-# Copy the application.yml from resources directory
-COPY src/main/resources/application.yml /app/config/application.yml
+# Expose port 8080 for the application
+EXPOSE 6080
 
-# Expose Kafka producer port (if applicable)
-EXPOSE 8080
-
-# Environment variables (optional, can be set via docker run as well)
-ENV SPRING_CONFIG_LOCATION=/app/config/application.yml
-ENV RSS_URL=https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml
-ENV POLL_INTERVAL=300000
+# Set environment variables for Redis
 ENV KAFKA_BROKER=localhost:39092,localhost:39093,localhost:39094
-ENV KAFKA_TOPIC=nyt.rss.articles
-
-# Add metadata
-LABEL maintainer="Natera@natera.com"
-LABEL description="RSS Producer Service"
-
-# Copy the entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
 # Run the application
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["java", "-jar", "rss-producer.jar"]
